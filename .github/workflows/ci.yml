@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 2   # IMPORTANT for change detection
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -27,6 +29,16 @@ jobs:
       - name: Run Security Scan
         run: bandit -r . || true
 
+      - name: Get Changes
+        run: |
+          if git rev-parse HEAD^ >/dev/null 2>&1; then
+            echo "CHANGES<<EOF" >> $GITHUB_ENV
+            git diff --name-status HEAD^ HEAD >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+          else
+            echo "CHANGES=First commit - no previous changes" >> $GITHUB_ENV
+          fi
+
       - name: Send Email Notification
         if: always()
         continue-on-error: true
@@ -40,8 +52,32 @@ jobs:
               receiver = "${{ secrets.EMAIL_USER }}"
               password = "${{ secrets.EMAIL_PASS }}"
 
-              msg = MIMEText("Code was pushed to repository successfully")
-              msg['Subject'] = "CI Alert: Code Changed"
+              raw_changes = """${{ env.CHANGES }}"""
+              message_lines = []
+
+              for line in raw_changes.splitlines():
+                  if not line.strip():
+                      continue
+
+                  parts = line.split("\t")
+                  if len(parts) < 2:
+                      continue
+
+                  status, file = parts
+
+                  if status == "M":
+                      message_lines.append(f"{file} was MODIFIED")
+                  elif status == "A":
+                      message_lines.append(f"{file} was ADDED")
+                  elif status == "D":
+                      message_lines.append(f"{file} was DELETED")
+                  else:
+                      message_lines.append(f"{file} was CHANGED")
+
+              final_message = "\n".join(message_lines) if message_lines else "No specific file changes detected"
+
+              msg = MIMEText(f"Repository Changes:\n\n{final_message}")
+              msg['Subject'] = "CI Alert: File Changes"
               msg['From'] = sender
               msg['To'] = receiver
 
