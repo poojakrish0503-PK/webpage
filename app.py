@@ -1,2 +1,1 @@
-import os
-os.system("ls")
+print("hello")
