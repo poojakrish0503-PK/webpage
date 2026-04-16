@@ -22,7 +22,4 @@ jobs:
       - name: Run Security Scan
         run: bandit -r .
 
-      - name: Fail if issue found
-        run: |
-          bandit -r .
-          if [ $? -ne 0 ]; then exit 1; fi
+        
