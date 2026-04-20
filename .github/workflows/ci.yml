@@ -22,17 +22,16 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-          cache: 'pip'
 
       - name: Install dependencies
         run: |
-          pip install streamlit bandit
+          pip install flask bandit
 
       - name: Run Security Scan
         run: |
           bandit -r . -x .github
 
-      - name: Check Streamlit App Syntax
+      - name: Check Flask App Syntax
         run: |
           if [ -f app.py ]; then
             python -m py_compile app.py
@@ -88,7 +87,7 @@ jobs:
               final_message = "\n".join(message_lines) if message_lines else "No specific file changes detected"
 
               msg = MIMEText(f"Repository Changes:\n\n{final_message}")
-              msg['Subject'] = "CI Alert: Streamlit App Changes"
+              msg['Subject'] = "CI Alert: File Changes"
               msg['From'] = sender
               msg['To'] = receiver
 
