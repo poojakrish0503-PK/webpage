@@ -4,11 +4,13 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  build:
+  security-check:
     runs-on: ubuntu-latest
-    
 
     steps:
       - name: Checkout Code
@@ -20,14 +22,17 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+          cache: 'pip'
 
       - name: Install dependencies
         run: |
-          pip install streamlit
-          pip install bandit
+          pip install streamlit bandit
 
       - name: Run Security Scan
-        run: bandit -r . || true
+        run: bandit -r .
+
+      - name: Check Streamlit App Syntax
+        run: python -m py_compile app.py
 
       - name: Get Changes
         run: |
@@ -38,11 +43,6 @@ jobs:
           else
             echo "CHANGES=First commit - no previous changes" >> $GITHUB_ENV
           fi
-
-      - name: Test Streamlit App
-        run: |
-          streamlit run app.py --server.headless true &
-          sleep 10
 
       - name: Send Email Notification
         if: always()
@@ -82,7 +82,7 @@ jobs:
               final_message = "\n".join(message_lines) if message_lines else "No specific file changes detected"
 
               msg = MIMEText(f"Repository Changes:\n\n{final_message}")
-              msg['Subject'] = "CI Alert: File Changes"
+              msg['Subject'] = "CI Alert: Streamlit App Changes"
               msg['From'] = sender
               msg['To'] = receiver
 
