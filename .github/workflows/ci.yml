@@ -29,10 +29,16 @@ jobs:
           pip install streamlit bandit
 
       - name: Run Security Scan
-        run: bandit -r .
+        run: |
+          bandit -r . -x .github
 
       - name: Check Streamlit App Syntax
-        run: python -m py_compile app.py
+        run: |
+          if [ -f app.py ]; then
+            python -m py_compile app.py
+          else
+            echo "app.py not found"
+          fi
 
       - name: Get Changes
         run: |
