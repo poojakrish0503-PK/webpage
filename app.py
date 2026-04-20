@@ -1,7 +1,8 @@
-
 import streamlit as st
 from datetime import datetime
 import time
+import pandas as pd
+import plotly.express as px
 
 # Page Configuration
 st.set_page_config(
@@ -10,140 +11,145 @@ st.set_page_config(
     layout="centered"
 )
 
-# Title Section
+# Session State for Login + Data Storage
+if "submitted_data" not in st.session_state:
+    st.session_state.submitted_data = []
+
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+
+# Title
 st.title("🌐 Welcome to the Python Web Page")
-st.write("This is a simple web page created using Python and Streamlit.")
+st.write("Enhanced Streamlit Web App with Extra Features")
 
 # Sidebar
 st.sidebar.header("Navigation")
-page = st.sidebar.radio(
-    "Go to",
-    ["Home", "About", "Contact"]
-)
+page = st.sidebar.radio("Go to", ["Home", "About", "Contact", "Dashboard"])
 
-# Theme Selection
 st.sidebar.subheader("🎨 Theme")
 theme = st.sidebar.selectbox("Choose Theme", ["Light", "Dark", "Blue"])
-st.sidebar.write(f"Selected Theme: {theme}")
 
-# Home Page
+# ---------------- LOGIN SIMULATION ----------------
+st.sidebar.subheader("🔐 Login")
+username = st.sidebar.text_input("Username")
+password = st.sidebar.text_input("Password", type="password")
+
+if st.sidebar.button("Login"):
+    if username and password:
+        st.session_state.logged_in = True
+        st.sidebar.success("Logged in successfully!")
+    else:
+        st.sidebar.warning("Enter credentials")
+
+# ---------------- HOME PAGE ----------------
 if page == "Home":
-    st.header("🏠 Home Page")
 
-    # User Input
-    name = st.text_input("Enter your name")
-    age = st.number_input("Enter your age", min_value=1, max_value=100, step=1)
-    gender = st.selectbox("Select your gender", ["Male", "Female", "Other"])
-    hobby = st.multiselect(
-        "Select your hobbies",
-        ["Reading", "Music", "Sports", "Coding", "Traveling"]
-    )
+    if not st.session_state.logged_in:
+        st.warning("Please login from sidebar first!")
+    else:
+        st.header("🏠 Home Page")
 
-    city = st.text_input("Enter your city")
-    favorite_color = st.color_picker("Pick your favorite color")
-    birth_date = st.date_input("Select your birth date")
+        name = st.text_input("Enter your name")
+        email = st.text_input("Enter your email")
 
-    # Feedback Section
-    rating = st.slider("Rate this webpage", 1, 10, 5)
-    feedback = st.text_area("Write your feedback")
+        age = st.number_input("Enter your age", 1, 100)
+        gender = st.selectbox("Gender", ["Male", "Female", "Other"])
+        hobby = st.multiselect("Hobbies", ["Reading", "Music", "Sports", "Coding", "Traveling"])
+        city = st.text_input("City")
 
-    # File Upload
-    uploaded_file = st.file_uploader("Upload a profile picture", type=["jpg", "png", "jpeg"])
+        favorite_color = st.color_picker("Favorite Color")
+        birth_date = st.date_input("Birth Date")
 
-    # Checkbox
-    agree = st.checkbox("I agree to share my details")
+        rating = st.slider("Rate this webpage", 1, 10, 5)
+        feedback = st.text_area("Feedback")
 
-    # Submit Button
-    if st.button("Submit"):
-        if name and agree:
-            with st.spinner("Submitting your details..."):
-                time.sleep(2)
+        uploaded_file = st.file_uploader("Upload Image", type=["jpg", "png", "jpeg"])
 
-            st.success(f"Hello, {name}! Welcome to the webpage.")
-            st.balloons()
+        agree = st.checkbox("I agree to share details")
 
-            st.subheader("👤 User Details")
-            st.write("Name:", name)
-            st.write("Age:", age)
-            st.write("Gender:", gender)
-            st.write("City:", city)
-            st.write("Birth Date:", birth_date)
-            st.write("Favorite Color:", favorite_color)
-            st.write("Hobbies:", ", ".join(hobby) if hobby else "No hobbies selected")
-            st.write("Login Time:", datetime.now().strftime("%d-%m-%Y %H:%M:%S"))
+        # Clear button
+        clear = st.button("Clear Form")
+        if clear:
+            st.experimental_rerun()
 
-            if uploaded_file is not None:
-                st.image(uploaded_file, caption="Uploaded Profile Picture", width=150)
+        # Submit
+        if st.button("Submit"):
+            if name and email and agree:
 
-            st.subheader("📌 Activity Status")
-            st.info(f"{name} accessed the webpage successfully.")
+                with st.spinner("Submitting..."):
+                    time.sleep(1.5)
 
-            st.subheader("⭐ Feedback")
-            st.write(f"You rated this webpage: {rating}/10")
-            st.write("Your Feedback:", feedback if feedback else "No feedback given")
+                data = {
+                    "Name": name,
+                    "Email": email,
+                    "Age": age,
+                    "Gender": gender,
+                    "City": city,
+                    "Hobbies": ", ".join(hobby),
+                    "Rating": rating,
+                    "Time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                }
 
-            # Progress Bar
-            st.subheader("📊 Profile Completion")
-            progress = 0
-            if name:
-                progress += 15
-            if age:
-                progress += 15
-            if gender:
-                progress += 15
-            if hobby:
-                progress += 15
-            if city:
-                progress += 10
-            if favorite_color:
-                progress += 10
-            if feedback:
-                progress += 10
-            if uploaded_file:
-                progress += 10
+                st.session_state.submitted_data.append(data)
 
-            st.progress(progress)
-            st.write(f"Profile Completion: {progress}%")
+                st.success(f"Welcome {name}!")
+                st.balloons()
 
-            # Display Current Date and Time
-            st.subheader("🕒 Current Date and Time")
-            st.write(datetime.now().strftime("%A, %d %B %Y - %I:%M:%S %p"))
+                st.image(uploaded_file, width=150) if uploaded_file else None
 
-            # Metric Section
-            st.subheader("📈 Quick Stats")
-            col1, col2, col3 = st.columns(3)
-            col1.metric("Age", age)
-            col2.metric("Rating", rating)
-            col3.metric("Hobbies Selected", len(hobby))
+                st.write("### Profile Summary")
+                st.json(data)
 
-        else:
-            st.warning("Please enter your name and agree to share your details.")
+            else:
+                st.warning("Fill name, email and agree checkbox")
 
-# About Page
+# ---------------- ABOUT PAGE ----------------
 elif page == "About":
     st.header("ℹ️ About")
-    st.write("This webpage is built using Streamlit and Python.")
-    st.write("It collects user details and displays information dynamically.")
+    st.write("Streamlit multi-feature web application")
+    st.write("Includes login, analytics, and data storage")
 
-    st.subheader("🚀 Features")
-    st.write("- User Registration Form")
-    st.write("- Profile Completion Tracker")
-    st.write("- Feedback and Rating System")
-    st.write("- File Upload Feature")
-    st.write("- Dynamic Date and Time")
-
-# Contact Page
+# ---------------- CONTACT PAGE ----------------
 elif page == "Contact":
     st.header("📞 Contact")
-    st.write("Email: example@gmail.com")
-    st.write("Phone: +91 9876543210")
-    st.write("Address: Mumbai, India")
+    msg = st.text_area("Message")
 
-    contact_message = st.text_area("Send us a message")
-    if st.button("Send Message"):
-        st.success("Your message has been sent successfully!")
+    if st.button("Send"):
+        st.success("Message sent successfully!")
 
-# Footer
+# ---------------- DASHBOARD ----------------
+elif page == "Dashboard":
+
+    st.header("📊 Dashboard")
+
+    if st.session_state.submitted_data:
+
+        df = pd.DataFrame(st.session_state.submitted_data)
+        st.dataframe(df)
+
+        # Download CSV
+        csv = df.to_csv(index=False).encode("utf-8")
+        st.download_button("Download Data", csv, "user_data.csv", "text/csv")
+
+        # Hobby chart
+        st.subheader("🎯 Hobby Analysis")
+
+        hobby_counts = {}
+        for row in st.session_state.submitted_data:
+            for h in row["Hobbies"].split(", "):
+                hobby_counts[h] = hobby_counts.get(h, 0) + 1
+
+        chart_df = pd.DataFrame({
+            "Hobby": list(hobby_counts.keys()),
+            "Count": list(hobby_counts.values())
+        })
+
+        fig = px.bar(chart_df, x="Hobby", y="Count")
+        st.plotly_chart(fig)
+
+    else:
+        st.info("No data available yet")
+
+# ---------------- FOOTER ----------------
 st.markdown("---")
-st.caption("Created using Python and Streamlit")
-
+st.caption("Built using Python + Streamlit 🚀")
