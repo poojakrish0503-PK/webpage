@@ -152,7 +152,7 @@ elif page == "Dashboard":
 
 # ---------------- FOOTER ----------------
 st.markdown("---")
-st.caption("Built using Python + Streamlit")
+st.caption("Built using Python + Streamlit add")
 # check out new branch
 # One more branch
 # add two more feature 
