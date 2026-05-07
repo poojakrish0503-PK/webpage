@@ -148,7 +148,7 @@ elif page == "Dashboard":
         st.plotly_chart(fig)
 
     else:
-        st.info("No data available yet now ")
+        st.info("No data available yet now are they")
 
 # ---------------- FOOTER ----------------
 st.markdown("---")
