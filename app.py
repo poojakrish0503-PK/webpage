@@ -54,7 +54,11 @@ if page == "Home":
 
         age = st.number_input("Enter your age", 1, 100)
         gender = st.selectbox("Gender", ["Male", "Female", "Other"])
-        hobby = st.multiselect("Hobbies", ["Reading", "Music", "Sports", "Coding", "Traveling"])
+        hobby = st.multiselect(
+            "Hobbies",
+            ["Reading", "Music", "Sports", "Coding", "Traveling"]
+        )
+
         city = st.text_input("City")
 
         favorite_color = st.color_picker("Favorite Color")
@@ -63,17 +67,22 @@ if page == "Home":
         rating = st.slider("Rate this webpage", 1, 10, 5)
         feedback = st.text_area("Feedback")
 
-        uploaded_file = st.file_uploader("Upload Image", type=["jpg", "png", "jpeg"])
+        uploaded_file = st.file_uploader(
+            "Upload Image",
+            type=["jpg", "png", "jpeg"]
+        )
 
         agree = st.checkbox("I agree to share details")
 
         # Clear button
         clear = st.button("Clear Form")
+
         if clear:
-            st.experimental_rerun()
+            st.rerun()
 
         # Submit
         if st.button("Submit"):
+
             if name and email and agree:
 
                 with st.spinner("Submitting..."):
@@ -95,7 +104,8 @@ if page == "Home":
                 st.success(f"Welcome {name}!")
                 st.balloons()
 
-                st.image(uploaded_file, width=150) if uploaded_file else None
+                if uploaded_file:
+                    st.image(uploaded_file, width=150)
 
                 st.write("### Profile Summary")
                 st.json(data)
@@ -105,13 +115,16 @@ if page == "Home":
 
 # ---------------- ABOUT PAGE ----------------
 elif page == "About":
+
     st.header("ℹ️ About")
     st.write("Streamlit multi-feature web application")
     st.write("Includes login, analytics, and data storage")
 
 # ---------------- CONTACT PAGE ----------------
 elif page == "Contact":
+
     st.header("📞 Contact")
+
     msg = st.text_area("Message")
 
     if st.button("Send"):
@@ -125,18 +138,49 @@ elif page == "Dashboard":
     if st.session_state.submitted_data:
 
         df = pd.DataFrame(st.session_state.submitted_data)
+
+        # Display Table
         st.dataframe(df)
+
+        # Total Users Counter
+        st.subheader("👥 User Statistics")
+        st.metric("Total Users", len(df))
+
+        # Search User Feature
+        st.subheader("🔍 Search User")
+
+        search_name = st.text_input("Search by Name")
+
+        if search_name:
+
+            filtered_df = df[
+                df["Name"].str.contains(search_name, case=False)
+            ]
+
+            if not filtered_df.empty:
+                st.dataframe(filtered_df)
+            else:
+                st.warning("No user found")
 
         # Download CSV
         csv = df.to_csv(index=False).encode("utf-8")
-        st.download_button("Download Data", csv, "user_data.csv", "text/csv")
 
-        # Hobby chart
+        st.download_button(
+            "Download Data",
+            csv,
+            "user_data.csv",
+            "text/csv"
+        )
+
+        # Hobby Chart
         st.subheader("🎯 Hobby Analysis")
 
         hobby_counts = {}
+
         for row in st.session_state.submitted_data:
+
             for h in row["Hobbies"].split(", "):
+
                 hobby_counts[h] = hobby_counts.get(h, 0) + 1
 
         chart_df = pd.DataFrame({
@@ -145,14 +189,12 @@ elif page == "Dashboard":
         })
 
         fig = px.bar(chart_df, x="Hobby", y="Count")
+
         st.plotly_chart(fig)
 
     else:
-        st.info("No data available yet now are they")
+        st.info("No data available yet")
 
 # ---------------- FOOTER ----------------
 st.markdown("---")
-st.caption("Built used in  Python + Streamlit add to the webpage")
-# check out new branch
-# One more branch
-# add two more feature 
+st.caption("🚀 Built with Python + Streamlit")
